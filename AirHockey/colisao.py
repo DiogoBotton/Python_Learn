@@ -37,7 +37,7 @@ def Att_Pos_Player():
         
     if dt > 0:
         mouse_velocity = math.sqrt((player.x - x)**2 + (player.y - y)**2) / dt
-        mouse_velocity = mouse_velocity * fps
+        mouse_velocity = mouse_velocity
         #print(mouse_velocity)
 
         player.Att_Pos(x,y)
