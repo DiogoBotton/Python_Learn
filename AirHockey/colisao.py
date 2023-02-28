@@ -32,13 +32,16 @@ circulos.append(circle)
 def Att_Pos_Player():
     x, y = pygame.mouse.get_pos()
     time_now = time.time()
-    
-    mouse_velocity = math.sqrt((player.x - x)**2 + (player.y - y)**2) / (time_now - player.tempo)
-    mouse_velocity = mouse_velocity * fps
-    #print(mouse_velocity)
 
-    player.Att_Pos(x,y)
-    player.Att_Vel(mouse_velocity)
+    dt =  (time_now - player.tempo)
+        
+    if dt > 0:
+        mouse_velocity = math.sqrt((player.x - x)**2 + (player.y - y)**2) / dt
+        mouse_velocity = mouse_velocity * fps
+        #print(mouse_velocity)
+
+        player.Att_Pos(x,y)
+        player.Att_Vel(mouse_velocity)
 
 # Função com tipagem de parâmetro
 def Att_Circles(cirs: List[Circulo]):
@@ -46,22 +49,26 @@ def Att_Circles(cirs: List[Circulo]):
         time_now = time.time()
         c_x = c.x
         c_y = c.y
+        local_fps = clock.get_fps() if clock.get_fps() != 0 else 1
 
         if velx > 0:
-            c_x = c.x + velx
+            c_x = c.x + (velx / local_fps)
         if velx < 0:
-            c_x = c.x + velx
+            c_x = c.x + (velx / local_fps)
         if vely > 0:
-            c_y = c.y + vely
+            c_y = c.y + (vely / local_fps)
         if vely < 0:
-            c_y = c.y + vely
+            c_y = c.y + (vely / local_fps)
         
-        c_velocity = math.sqrt((c.x - c_x)**2 + (c.y - c_y)**2) / (time_now - c.tempo)
-        c_velocity = c_velocity
-        print(c_velocity)
+        dt =  (time_now - c.tempo)
+        
+        if dt > 0:
+            c_velocity = math.sqrt((c.x - c_x)**2 + (c.y - c_y)**2) / dt
+            c_velocity = c_velocity
+            print(c_velocity)
 
-        c.Att_Pos(c_x, c_y)
-        c.Att_Vel(c_velocity)
+            c.Att_Pos(c_x, c_y)
+            c.Att_Vel(c_velocity)
 
 while True:
     screen.fill((0,0,0))
