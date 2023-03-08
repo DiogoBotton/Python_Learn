@@ -72,13 +72,37 @@ def detectar_colisao_parede(bolinha: Circulo):
         #atrito(bolinha)
 
 def detectar_colisao_circulos(origem: Circulo, alvo: Circulo):
-    vetor_magnitude = math.sqrt((alvo.x - origem.x)**2 + (alvo.y - origem.y)**2)
+    distancia_x = alvo.x - origem.x
+    distancia_y = alvo.y - origem.y
+    distancia = math.sqrt((distancia_x)**2 + (distancia_y)**2)
 
-    if vetor_magnitude <= (raio_circulo*2):
-        #velx = (origem.velx - alvo.velx)
-        #vely = (origem.vely - alvo.vely)
-        #alvo.Att_Vel_XY(velx, vely)
-        print("colidiu")
+    if distancia <= (raio_circulo*2):
+        vel_colisao = alvo.velocidade - origem.velocidade
+        velx_relativa = (alvo.velx - origem.velx)
+        vely_relativa = (alvo.vely - origem.vely)
+        
+        normalX = velx / distancia
+        normalY = vely / distancia
+        velx_normal = velx_relativa * normalX
+        vely_normal = vely_relativa * normalY
+        velx_tangencial = velx_relativa - velx_normal
+        vely_tangencial = vely_relativa - vely_normal
+
+        v1_tang = (origem.velx * normalX) + (origem.vely * normalY), (origem.velx * -normalY) + (origem.vely * normalX)
+        v2_tang = (alvo.velx * normalX) + (alvo.vely * normalY), (alvo.velx * -normalY) + (alvo.vely * normalX)
+
+        v1_norm = ((origem.massa - alvo.massa) * velx_normal + 2 * alvo.massa * velx_normal) / (origem.massa + alvo.massa), ((origem.massa - alvo.massa) * vely_normal + 2 * alvo.massa * vely_normal) / (origem.massa + alvo.massa)
+        v2_norm = ((alvo.massa - origem.massa) * velx_normal + 2 * origem.massa * velx_normal) / (origem.massa + alvo.massa), ((alvo.massa - origem.massa) * vely_normal + 2 * origem.massa * vely_normal) / (origem.massa + alvo.massa)
+
+        v1_novo = (v1_tang[0] + v1_norm[0]), (v1_tang[1] + vel_colisao) 
+        #v2_novo = (v2_tang[0] + v2_norm[0]), (v2_tang[1] + vel_colisao)
+        v2y_novo = (alvo.velx * (alvo.massa - origem.massa) + 2 * origem.massa * origem.velx) / (origem.massa + alvo.massa)
+        v2y_novo = (alvo.vely * (alvo.massa - origem.massa) + 2 * origem.massa * origem.vely) / (origem.massa + alvo.massa)
+
+        origem.Att_Vel_XY(v1_novo[0], v1_novo[1])
+        alvo.Att_Vel_XY(v2y_novo, v2y_novo)
+
+        #print("colidiu")
 
 def Att_Pos_Player():
     x, y = pygame.mouse.get_pos()
