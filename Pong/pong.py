@@ -16,10 +16,13 @@ raio_circulo = 30
 time_player = time.time()
 fps = 60
 WHITE = (255,255,255)
-rectangle_dimensions = (250, 50) #width, height
-velXY_circle = 200
+rectangle_dimensions = (249, 49) #width, height
+velXY_circle = 250
 global initialize
 initialize = False
+global pontuou
+pontuou = False
+velX_rectangle = 180
 
 global score
 score = (0,0) # (player, oponent)
@@ -30,6 +33,7 @@ pygame.mouse.set_visible(False)
 clock = pygame.time.Clock()
 fonte = pygame.font.SysFont('roboto', 40, True, True)
 
+global circle
 player = Retangulo(rectangle_dimensions[0], rectangle_dimensions[1], (screenWidth / 2) - (rectangle_dimensions[0] / 2), screenHeight - 100, "bottom")
 oponent = Retangulo(rectangle_dimensions[0], rectangle_dimensions[1], (screenWidth / 2) - (rectangle_dimensions[0] / 2), 50, "top")
 circle = Circulo(raio_circulo, screenWidth / 2, screenHeight / 2)
@@ -50,7 +54,7 @@ def RolarDados_Inicio():
     value = randint(1, 100)
     value2 = randint(1, 100)
 
-    if(value > 80):
+    if(value > 50):
         velx = velXY_circle if value2 < 60 else -velXY_circle
         vely = velXY_circle if value2 > 60 else -velXY_circle
     else:
@@ -74,23 +78,34 @@ class Att_Pos_Worker(Thread):
             bolinha.Att_Vel_XY(0, 0)
 
         global score
-        if (bolinha.y + raio_circulo) >= screenHeight:
+        global pontuou
+        if (bolinha.y + raio_circulo) >= screenHeight and not pontuou:
             score = (score[0],score[1] +1)
+            pontuou = True
             print("Oponente Pontuou")
-        elif (bolinha.y + raio_circulo) <= (0 + raio_circulo*2):
+        elif (bolinha.y + raio_circulo) <= (0 + raio_circulo*2) and not pontuou:
             score = (score[0] +1, score[1])
+            pontuou = True
             print("Player Pontuou")
         
         # Colisão com retângulos
         for r in rectangles:
-            if(r.position.lower() == 'bottom'):
-                  #                                         Eixo Y                                                    ///                                              Eixo X
-                if((bolinha.y + raio_circulo) >= r.y and (bolinha.y + raio_circulo) <= r.y + rectangle_dimensions[1]) and (bolinha.x + raio_circulo) >= r.x and (bolinha.x - raio_circulo) <= r.x + rectangle_dimensions[0]:
+              # Colisão cima e baixo                    Eixo Y                                                    ///                                              Eixo X
+            if((bolinha.y + raio_circulo) >= r.y and (bolinha.y + raio_circulo) <= r.y + rectangle_dimensions[1]) and (bolinha.x + raio_circulo) >= r.x and (bolinha.x - raio_circulo) <= r.x + rectangle_dimensions[0]:
+                if r.position == "bottom":
                     bolinha.Att_Vel_XY(bolinha.velx, -bolinha.vely)
-            else: 
-                  #                                         Eixo Y                                                    ///                                              Eixo X
-                if((bolinha.y - raio_circulo) >= r.y and (bolinha.y - raio_circulo) <= r.y + rectangle_dimensions[1]) and (bolinha.x + raio_circulo) >= r.x and (bolinha.x - raio_circulo) <= r.x + rectangle_dimensions[0]:
+                    #print('colidiu cima')
+              #                                         Eixo Y                                                    ///                                              Eixo X
+            elif((bolinha.y - raio_circulo) >= r.y and (bolinha.y - raio_circulo) <= r.y + rectangle_dimensions[1]) and (bolinha.x + raio_circulo) >= r.x and (bolinha.x - raio_circulo) <= r.x + rectangle_dimensions[0]:
+                if r.position == "top":
                     bolinha.Att_Vel_XY(bolinha.velx, -bolinha.vely)
+                    #print('colidiu baixo')
+              # Colisão com as laterais                 Eixo X                                                    ///                                              Eixo Y
+            '''
+            elif((bolinha.x + raio_circulo) >= r.x and (bolinha.x - raio_circulo) <= r.x + rectangle_dimensions[0] and (bolinha.y + raio_circulo) >= r.y and (bolinha.y - raio_circulo) <= r.y + rectangle_dimensions[1]):
+                bolinha.Att_Vel_XY(-bolinha.velx, bolinha.vely)
+                print('colidiu lado')
+            '''
     
     # Função com tipagem de parâmetro
     def Att_Pos_Rect(self, rects: List[Retangulo]):
@@ -121,6 +136,19 @@ class Att_Pos_Worker(Thread):
         
         if(ball.velx != 0 or ball.vely != 0):
             ball.Att_Pos(ball_x, ball_y)
+    
+    def AI_Oponent(self, oponent: Retangulo, ball: Circulo):
+        oponent_x = oponent.x + (rectangle_dimensions[0] / 2)
+        limite_tela = ((oponent.x + rectangle_dimensions[0]) <= screenWidth, (oponent.x + rectangle_dimensions[0]) >= rectangle_dimensions[0])
+        
+        if ball.x > oponent_x and limite_tela[0] and ball.velx != 0:
+            oponent_x = 180
+        elif ball.x < oponent_x and limite_tela[1] and ball.velx != 0:
+            oponent_x = -180
+        else:
+            oponent_x = 0
+        
+        oponent.Att_Vel_X(oponent_x)
 
     def run(self):
         while True:
@@ -128,6 +156,7 @@ class Att_Pos_Worker(Thread):
             self.Att_Pos_Rect(rectangles)
             self.Att_Pos_Ball(circle)
             self.detectar_colisao_bolinha(circle)
+            self.AI_Oponent(oponent, circle)
 
 def main():
     worker = Att_Pos_Worker()
@@ -143,9 +172,9 @@ def main():
                 sys.exit()
 
         if(pygame.key.get_pressed()[K_RIGHT]):
-            player.velx = 200
+            player.velx = velX_rectangle
         elif(pygame.key.get_pressed()[K_LEFT]):
-            player.velx = -200
+            player.velx = -velX_rectangle
         else:
             player.velx = 0
 
@@ -159,6 +188,7 @@ def main():
 
         if not initialize:
             RolarDados_Inicio()
+            oponent.Att_Vel_X(velX_rectangle)
 
         pygame.display.update()
 
