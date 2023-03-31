@@ -1,3 +1,5 @@
+print("Grupo 2: \nDiogo Botton\nFelipe Katayama\nKalli Yuka\nLeonardo Cardenas\nWilian Barbosa\n")
+print("Questão 3\n")
 arrayString = []
 N = 1
 finalizar = False
