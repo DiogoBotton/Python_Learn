@@ -7,7 +7,7 @@ from constants import *
 
 pygame.init()
 
-screenWidth = 700
+screenWidth = 900
 screenHeight = screenWidth
 borderWidth = 15
 squares = 15 # 15x15
@@ -22,13 +22,19 @@ gridGreens = [
                 (0,0),(0,1),(0,2),(0,3),(0,4),(0,5),
                 (1,0),(2,0),(3,0),(4,0),(5,0),
                 (5,5),(4,5),(3,5),(2,5),(1,5),
-                (5,5),(4,5),(3,5),(2,5),(1,5),
                 (5,4),(5,3),(5,2),(5,1),
                 # Ways
                 (6,1),(7,1),(7,2),(7,3),(7,4),(7,5)
             ]
+gridReds = [
+                (9,0),(9,1),(9,2),(9,3),(9,4),(9,5),
+                (10,0),(11,0),(12,0),(13,0),(14,0),
+                (14,5),(13,5),(12,5),(11,5),(10,5),
+                (14,4),(14,3),(14,2),(14,1),
+                # Ways
+                (13,6),(13,7),(12,7),(11,7),(10,7),(9,7)
+            ]
 gridBlues = []
-gridReds = [(10,0), (10,1)]
 gridOranges = []
 # ------------------------------------------------------
 
@@ -52,20 +58,19 @@ while True:
 
     # Borders
     # ---------------------------------------------------------------------------------------
-    pygame.draw.line(screen, DARKGREEN, (0, 0), (0, screenHeight), borderWidth)
-    pygame.draw.line(screen, DARKGREEN, (0, 0), (screenWidth, 0), borderWidth)
-    pygame.draw.line(screen, DARKGREEN, (screenWidth, 0), (screenWidth, screenHeight), borderWidth)
-    pygame.draw.line(screen, DARKGREEN, (0, screenHeight), (screenWidth, screenHeight), borderWidth)
+    pygame.draw.line(screen, DARKGREEN, (borderWidth - (borderWidth/2), 0), (borderWidth - (borderWidth/2), screenHeight), borderWidth)
+    pygame.draw.line(screen, DARKGREEN, (0, borderWidth - (borderWidth/2)), (screenWidth, borderWidth - (borderWidth/2)), borderWidth)
+    pygame.draw.line(screen, DARKGREEN, (screenWidth - (borderWidth/2), 0), (screenWidth - (borderWidth/2), screenHeight), borderWidth)
+    pygame.draw.line(screen, DARKGREEN, (0, screenHeight - (borderWidth/2)), (screenWidth, screenHeight - (borderWidth/2)), borderWidth)
     # ---------------------------------------------------------------------------------------
 
-    for x in range(0, squares):
+    for x in range(0, squares+1):
         cordHorizontal = screenDraw_XY[0] + (gridPixels * x)
-        #pygame.draw.line(screen, BLACK, (screenDraw_XY[0], cordHorizontal), (screenDraw_XY[1], cordHorizontal))
-        #pygame.draw.rect(screen,GREEN,(screenDraw_XY[0], cordHorizontal,gridPixels,gridPixels))
-        for y in range(0, squares):
+        pygame.draw.line(screen, BLACK, (screenDraw_XY[0], cordHorizontal), (screenDraw_XY[1], cordHorizontal)) # Draw Lines
+        for y in range(0, squares+1):
             cordVertical = screenDraw_XY[0] + (gridPixels * y)
-            #pygame.draw.line(screen, BLACK, (cordVertical, screenDraw_XY[0]), (cordVertical, screenDraw_XY[1]))
-            #pygame.draw.rect(screen,GREEN,(cordVertical, screenDraw_XY[0],gridPixels,gridPixels))
+            pygame.draw.line(screen, BLACK, (cordVertical, screenDraw_XY[0]), (cordVertical, screenDraw_XY[1])) # Draw Lines
+
             if (x,y) in gridGreens: 
                 pygame.draw.rect(screen,GREEN,(cordVertical, cordHorizontal,gridPixels,gridPixels))
             if (x,y) in gridReds: 
