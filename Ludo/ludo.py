@@ -8,7 +8,7 @@ from constants import *
 pygame.init()
 
 screenWidth = 700
-screenHeight = 700
+screenHeight = screenWidth
 borderWidth = 15
 squares = 15 # 15x15
 
@@ -28,7 +28,7 @@ gridGreens = [
                 (6,1),(7,1),(7,2),(7,3),(7,4),(7,5)
             ]
 gridBlues = []
-gridReds = []
+gridReds = [(10,0), (10,1)]
 gridOranges = []
 # ------------------------------------------------------
 
