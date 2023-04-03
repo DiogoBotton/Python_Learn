@@ -1,3 +1,4 @@
+from ast import List
 import pygame, sys
 from math import floor
 from pygame.locals import *
@@ -5,9 +6,9 @@ from random import randint
 import time
 from constants import *
 
+screenWidth = 900
 pygame.init()
 
-screenWidth = 900
 screenHeight = screenWidth
 borderWidth = 15
 squares = 15 # 15x15
@@ -34,8 +35,22 @@ gridReds = [
                 # Ways
                 (13,6),(13,7),(12,7),(11,7),(10,7),(9,7)
             ]
-gridBlues = []
-gridOranges = []
+gridBlues = [
+                (9,9),(9,10),(9,11),(9,12),(9,13),(9,14),
+                (10,9),(11,9),(12,9),(13,9),(14,9),
+                (14,14),(13,14),(12,14),(11,14),(10,14),
+                (14,13),(14,12),(14,11),(14,10),
+                # Ways
+                (8,13),(7,13),(7,12),(7,11),(7,10),(7,9)
+            ]
+gridOranges = [
+                (0,9),(1,9),(2,9),(3,9),(4,9),(5,9),
+                (0,9),(0,10),(0,11),(0,12),(0,13),(0,14),
+                (1,14),(2,14),(3,14),(4,14),(5,14),
+                (5,10),(5,11),(5,12),(5,13),(5,14),
+                # Ways
+                (1,8),(1,7),(2,7),(3,7),(4,7),(5,7)
+            ]
 # ------------------------------------------------------
 
 time_player = time.time()
@@ -73,11 +88,11 @@ while True:
 
             if (x,y) in gridGreens: 
                 pygame.draw.rect(screen,GREEN,(cordVertical, cordHorizontal,gridPixels,gridPixels))
-            if (x,y) in gridReds: 
+            elif (x,y) in gridReds: 
                 pygame.draw.rect(screen,RED,(cordVertical, cordHorizontal,gridPixels,gridPixels))
-            if (x,y) in gridOranges: 
+            elif (x,y) in gridOranges: 
                 pygame.draw.rect(screen,ORANGE,(cordVertical, cordHorizontal,gridPixels,gridPixels))
-            if (x,y) in gridBlues: 
+            elif (x,y) in gridBlues: 
                 pygame.draw.rect(screen,BLUE,(cordVertical, cordHorizontal,gridPixels,gridPixels))
 
     pygame.display.update()
