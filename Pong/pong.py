@@ -1,7 +1,6 @@
 from threading import Thread
 from typing import List
 import pygame, sys
-import math
 from pygame.locals import *
 import time
 from random import randint
@@ -23,6 +22,13 @@ initialize = False
 global pontuou
 pontuou = False
 velX_rectangle = 180
+
+sound_background = pygame.mixer.music.load("Pong/love.mp3")
+pygame.mixer.music.play(-1) # (-1) => Sempre que acabar o aúdio irá repeti-lo
+pygame.mixer.music.set_volume(0.5)
+
+# Em exceção da música de fundo, todos os outros sons deverão ser de extensão .WAV
+sound_colide = pygame.mixer.Sound("Pong/kick.wav")
 
 global score
 score = (0,0) # (player, oponent)
@@ -72,10 +78,12 @@ class Att_Pos_Worker(Thread):
         # Colisão eixo X
         if (bolinha.x + raio_circulo) >= screenWidth or (bolinha.x + raio_circulo) <= (0 + raio_circulo*2):
             bolinha.Att_Vel_XY(-bolinha.velx, bolinha.vely)
+            sound_colide.play()
 
         # Colisão eixo Y
         if (bolinha.y + raio_circulo) >= screenHeight or (bolinha.y + raio_circulo) <= (0 + raio_circulo*2):
             bolinha.Att_Vel_XY(0, 0)
+            sound_colide.play()
 
         global score
         global pontuou
@@ -94,11 +102,13 @@ class Att_Pos_Worker(Thread):
             if((bolinha.y + raio_circulo) >= r.y and (bolinha.y + raio_circulo) <= r.y + rectangle_dimensions[1]) and (bolinha.x + raio_circulo) >= r.x and (bolinha.x - raio_circulo) <= r.x + rectangle_dimensions[0]:
                 if r.position == "bottom":
                     bolinha.Att_Vel_XY(bolinha.velx, -bolinha.vely)
+                    sound_colide.play()
                     #print('colidiu cima')
               #                                         Eixo Y                                                    ///                                              Eixo X
             elif((bolinha.y - raio_circulo) >= r.y and (bolinha.y - raio_circulo) <= r.y + rectangle_dimensions[1]) and (bolinha.x + raio_circulo) >= r.x and (bolinha.x - raio_circulo) <= r.x + rectangle_dimensions[0]:
                 if r.position == "top":
                     bolinha.Att_Vel_XY(bolinha.velx, -bolinha.vely)
+                    sound_colide.play()
                     #print('colidiu baixo')
               # Colisão com as laterais                 Eixo X                                                    ///                                              Eixo Y
             '''

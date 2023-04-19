@@ -37,6 +37,8 @@ for l in file:
     line_tuple = ((R,G,B), (x_init, y_init), (x_end, y_end), line_width)
     linesForDraw.append(line_tuple)
 
+file.close()
+
 pygame.display.set_caption("ExN1D")
 pygame.mouse.set_visible(False)
 clock = pygame.time.Clock()
