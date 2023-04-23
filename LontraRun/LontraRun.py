@@ -1,3 +1,4 @@
+from random import randrange
 import pygame, sys
 from pygame.locals import *
 import os
@@ -9,7 +10,7 @@ WHITE = (255,255,255)
 # Jump physic
 Y_GRAVITY = 0.8
 Y_SPINNING = 8
-JUMP_HEIGHT = 15
+JUMP_HEIGHT = 20
 Y_VELOCITY = JUMP_HEIGHT
 
 screenWidth = 800
@@ -17,6 +18,7 @@ screenHeight = 600
 
 # Armazena diretório principal onde o arquivo atual (Dino.py) esta armazenado
 main_path = os.path.dirname(__file__)
+
 # Armazena diretórios de som e imagens
 img_path = os.path.join(main_path, 'images')
 sounds_path = os.path.join(main_path, 'sounds')
@@ -28,23 +30,40 @@ screen = pygame.display.set_mode((screenWidth, screenHeight),0,32)
 mainClock = pygame.time.Clock()
 fps = 60
 
+# Sprites and Grounds
 sprite_sheet = pygame.image.load(os.path.join(img_path, 'otter_moving.png')).convert_alpha() # convert_aplha mantem a transparência da imagem
 sprite_sheet_iddle = pygame.image.load(os.path.join(img_path, 'otter_laugh.png')).convert_alpha()
+sprite_sheet_obstacles = pygame.image.load(os.path.join(img_path, 'tronco_obstaculo.png')).convert_alpha()
+
 resolution = 64 # Sprites com resolução de 64 x 64
 scale = 3
 spritesPerSecGame = 8
 spritesPerSecMenu = 6
 updateValueGame = spritesPerSecGame/fps
 updateValueMenu = spritesPerSecMenu/fps
-velx = 4
-floorWidth = resolution*2
-floor = screenHeight-150
+
+floorWidth = 320
+ground = screenHeight-150
 lontraPosX = 150
- 
+scroll = 1
+
 font = pygame.font.SysFont(None, 20)
 
+class Background():
+    def __init__(self, x, image):
+        self.x = x
+        self.image = image
+        self.velx = 0
+
+bg_images = []
+for i in range(1,6):
+    bgImg = pygame.transform.scale(pygame.image.load(os.path.join(img_path, f'plx-{i}.png')).convert_alpha(), (screenWidth, screenHeight))
+    bg = Background(0, bgImg)
+    bg_images.append(bg)
+bg_width = bg_images[0].image.get_width()
+
 # Classe Lontra HERDA (Herança) da classe Sprite do pygame
-class Lontra(pygame.sprite.Sprite):
+class Otter(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
         self.iddle_sprites = []
@@ -66,8 +85,9 @@ class Lontra(pygame.sprite.Sprite):
         self.index = 0
         self.image = self.running_sprites[self.index]
         self.rect = self.image.get_rect()
-        self.rect.center = (lontraPosX,floor)
+        self.rect.center = (lontraPosX,ground)
         self.image = pygame.transform.scale(self.image, (resolution*scale, resolution*scale))
+        self.mask = pygame.mask.from_surface(self.image)
         self.jumping = False
         self.running = False
     
@@ -80,7 +100,7 @@ class Lontra(pygame.sprite.Sprite):
     def set_game(self):
         self.jumping = False
         self.running = True
-        self.rect.center = (lontraPosX,floor)
+        self.rect.center = (lontraPosX,ground)
         
     def update(self):
         if self.running:
@@ -91,12 +111,14 @@ class Lontra(pygame.sprite.Sprite):
             self.image = self.running_sprites[int(self.index)]
             self.image = pygame.transform.scale(self.image, (resolution*scale, resolution*scale))
             
-        # Calculo para simulação de física de pulo
         elif self.jumping:
+            # Calculo para simulação de física de pulo
             # Necessário global para conseguir referenciar variável
             global Y_VELOCITY
             self.rect.y -= Y_VELOCITY
             Y_VELOCITY -= Y_GRAVITY
+
+            # Alterna entre os sprites baseado na altura (y)
             if Y_VELOCITY > Y_SPINNING:
                 self.index = 0
             elif Y_VELOCITY <= 0:
@@ -106,11 +128,11 @@ class Lontra(pygame.sprite.Sprite):
                     self.index = 0
                 self.index += 1
 
-            if Y_VELOCITY < -JUMP_HEIGHT and self.rect.center[1] >= floor:
+            if Y_VELOCITY < -JUMP_HEIGHT and self.rect.center[1] >= ground:
                 self.jumping = False
                 self.running = True
                 Y_VELOCITY = JUMP_HEIGHT
-                self.rect.center = (lontraPosX,floor)
+                self.rect.center = (lontraPosX,ground)
 
             self.image = self.jumping_sprites[int(self.index)]
             self.image = pygame.transform.scale(self.image, (resolution*scale, resolution*scale))
@@ -122,10 +144,45 @@ class Lontra(pygame.sprite.Sprite):
             self.image = self.iddle_sprites[int(self.index)]
             self.image = pygame.transform.scale(self.image, (resolution*scale, resolution*scale))
 
+class Obstacles(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        self.sprites = []
+        for i in range (0,3):
+            img = sprite_sheet_obstacles.subsurface((32*i,0), (32,32))
+            self.sprites.append(img)   
+        self.image = self.sprites[randrange(0,2)]
+        self.image = pygame.transform.scale(self.image, (32*3, 32*3))
+        self.rect = self.image.get_rect()
+        self.rect.center = (randrange(screenWidth,screenWidth + 320,80),screenHeight-(self.rect.height/2))
+    
+    def update(self):
+        if self.rect.topright[0] <= 0:
+            self.rect.center = (randrange(screenWidth,screenWidth + 320,80),screenHeight-(self.rect.height/2))
+            self.image = self.sprites[randrange(0,2)]
+            self.image = pygame.transform.scale(self.image, (32*3, 32*3))
+        self.rect.x -= scroll*4
+        
 # Lista de todas as sprites que terão no game
-allSprites = pygame.sprite.Group()
-lontra = Lontra()
-allSprites.add(lontra)
+otterSprites = pygame.sprite.Group()
+obstaclesSprites = pygame.sprite.Group()
+lontra = Otter()
+obstacles = Obstacles()
+otterSprites.add(lontra)
+obstaclesSprites.add(obstacles)
+
+def draw_bg():
+    speed = 1
+    for bg in bg_images:
+        # Para cada img, cria +1 para o efeito background infinito
+        for x in range(0,2):
+            bg.velx += scroll
+            bg.x = bg_width * x - (bg.velx * speed)
+            screen.blit(bg.image, (bg.x, 0))
+            
+            if x > 0 and bg.x <= 0:
+                bg.velx = 0
+        speed += 0.2
  
 def draw_text(text, font, color, surface, x, y):
     textobj = font.render(text, 1, color)
@@ -137,11 +194,12 @@ click = False
  
 def main_menu():
     while True:
-        screen.fill(BLACK)
+        screen.fill(WHITE)
         draw_text('Lontra Ruunnn', font, (255, 255, 255), screen, 20, 20)
  
         mx, my = pygame.mouse.get_pos()
- 
+        
+        global click
         button_1 = pygame.Rect(50, 100, 200, 50)
         button_2 = pygame.Rect(50, 200, 200, 50)
         if button_1.collidepoint((mx, my)):
@@ -169,8 +227,8 @@ def main_menu():
         
         lontra.set_menu()
         pygame.time.delay(2)
-        allSprites.draw(screen)
-        allSprites.update()
+        otterSprites.draw(screen)
+        otterSprites.update()
 
         pygame.display.flip()
         mainClock.tick(fps)
@@ -179,7 +237,8 @@ def game():
     running = True
     while running:
         screen.fill(WHITE)
-        
+
+        draw_bg()
         draw_text('game', font, BLACK, screen, 20, 20)
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -191,14 +250,18 @@ def game():
                     running = False
         
         keys_pressed = pygame.key.get_pressed()
-
+        global Y_VELOCITY
         if keys_pressed[pygame.K_SPACE]:
+            if Y_VELOCITY <= 0 and Y_VELOCITY >= -8 and lontra.jumping:
+                Y_VELOCITY += 0.5
             lontra.jumping = True
             lontra.running = False
 
         pygame.time.delay(2)
-        allSprites.draw(screen)
-        allSprites.update()
+        otterSprites.draw(screen)
+        otterSprites.update()
+        obstaclesSprites.draw(screen)
+        obstaclesSprites.update()
         
         pygame.display.flip()
         mainClock.tick(fps)
