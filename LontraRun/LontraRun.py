@@ -56,8 +56,8 @@ class Background():
         self.velx = 0
 
 bg_images = []
-for i in range(1,6):
-    bgImg = pygame.transform.scale(pygame.image.load(os.path.join(img_path, f'plx-{i}.png')).convert_alpha(), (screenWidth, screenHeight))
+for i in range(1,3):
+    bgImg = pygame.transform.scale(pygame.image.load(os.path.join(img_path, f'bg_{i}.png')).convert_alpha(), (screenWidth, screenHeight))
     bg = Background(0, bgImg)
     bg_images.append(bg)
 bg_width = bg_images[0].image.get_width()
