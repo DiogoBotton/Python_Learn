@@ -1,3 +1,4 @@
+import random
 import pygame, sys
 from pygame.locals import *
 from random import randrange
@@ -20,12 +21,12 @@ Y_VELOCITY = JUMP_HEIGHT
 
 pygame.init()
 
+# Em exceção da música de fundo, todos os outros sons deverão ser de extensão .WAV
+sound_collide = pygame.mixer.Sound(os.path.join(sounds_path, 'death_sound.wav'))
+
 screenWidth = 800
 screenHeight = 600
 screen = pygame.display.set_mode((screenWidth, screenHeight))
-fonte = pygame.font.SysFont("arial", 40, True, False)
-#msg = "Aperte qualquer tecla para animar o sapinho :)"
-#screen_txt = fonte.render(msg, True, WHITE)
 
 pygame.display.set_caption("Dino Game Sem Net")
 clock = pygame.time.Clock()
@@ -40,6 +41,14 @@ velx = 4
 floorWidth = resolution*2
 floor = screenHeight-130
 dinoPositionX = 150
+score = 0
+
+def draw_text(txt: str, size: int, color: tuple, xy: tuple):
+    font = pygame.font.SysFont("comicsansms", size, True, False)
+    msg = f"{txt}"
+    textobj = font.render(msg, True, color)
+    screen.blit(textobj, (xy[0],xy[1]))
+    return textobj
 
 # Classe Dino HERDA (Herança) da classe Sprite do pygame
 class Dino(pygame.sprite.Sprite):
@@ -56,8 +65,10 @@ class Dino(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = (dinoPositionX,floor)
         self.image = pygame.transform.scale(self.image, (resolution*scale, resolution*scale))
+        self.mask = pygame.mask.from_surface(self.image)
         self.animate = False
         self.jumping = False
+        self.collided = False
         
     def update(self):
         if self.index >= len(self.images_dino)-1:
@@ -108,11 +119,30 @@ class Chao(pygame.sprite.Sprite):
             self.rect.x = screenWidth
         self.rect.x -= velx
 
+class Cacto(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = sprite_sheet.subsurface((resolution*5, 0), (resolution, resolution))
+        self.image = pygame.transform.scale(self.image, (resolution*2, resolution*2))
+        self.rect = self.image.get_rect()
+        self.mask = pygame.mask.from_surface(self.image)
+        self.rect.center = (screenWidth, screenHeight - 100)
+
+    def update(self):
+        if self.rect.topright[0] <= 0:
+            self.rect.center = (screenWidth, screenHeight - 100)
+        
+        self.rect.x -= velx
 
 # Lista de todas as sprites que terão no game
 allSprites = pygame.sprite.Group()
+dinoSprites = pygame.sprite.Group()
+obstaclesSprites = pygame.sprite.Group()
+
 dino = Dino()
-allSprites.add(dino)
+cacto = Cacto()
+obstaclesSprites.add(cacto)
+dinoSprites.add(dino)
 
 for i in range(0,4):
     nuvem = Nuvem()
@@ -137,7 +167,28 @@ while True:
         dino.jumping = True
 
     pygame.time.delay(2)
+    dinoSprites.draw(screen)
     allSprites.draw(screen)
-    allSprites.update()
-    #screen.blit(screen_txt, (50, 50))
+    obstaclesSprites.draw(screen)
+
+    # Colisão de sprites:
+    # 1° paramêtro: sprite principal
+    # 2° paramêtro: sprites que poderam se chocar com a principal
+    # 3° paramêtro: se a sprite que colidiu com o dino será removida após a colisão (doKill)
+    # 4° paramêtro: "FLAG", tipo da colisão, colisão de circulos, quadrados ou pixels (máscara)
+    colisoes = pygame.sprite.spritecollide(dino, obstaclesSprites, False, pygame.sprite.collide_mask)
+
+    # Caso houver uma colisão, libera aúdio de colisão e para de atualizar as sprites
+    if colisoes and not dino.collided:
+        sound_collide.play()
+        dino.collided = True
+    elif dino.collided:
+        pass
+    else:
+        score += 1/2
+        dinoSprites.update()
+        allSprites.update()
+        obstaclesSprites.update()
+    
+    draw_text(f'SCORE: {int(score)}', 40, BLACK, (screenWidth - (screenWidth-50), 50))
     pygame.display.flip()
