@@ -1,3 +1,4 @@
+import math
 from random import randrange
 import pygame, sys
 from pygame.locals import *
@@ -37,20 +38,23 @@ fps = 60
 sprite_sheet = pygame.image.load(os.path.join(img_path, 'otter_moving.png')).convert_alpha() # convert_aplha mantem a transparência da imagem
 sprite_sheet_iddle = pygame.image.load(os.path.join(img_path, 'otter_laugh.png')).convert_alpha()
 sprite_sheet_obstacles = pygame.image.load(os.path.join(img_path, 'tronco_obstaculo.png')).convert_alpha()
+ground_img = pygame.image.load(os.path.join(img_path, 'ground_tile.png')).convert_alpha()
 
 # Variáveis necessárias
 resolution = 64 # Sprites com resolução de 64 x 64
 scale = 3 # Escala para ampliação de imagens
-spritesPerSecGame = 8 # Sprites por segundo no game
-spritesPerSecMenu = 6 # Sprites por segundo no menu
+spritesPerSecGame = 4 # Sprites por segundo no game
+spritesPerSecMenu = 3 # Sprites por segundo no menu
 
 # Valor utilizado para exibir exatamente o número de sprites definidas nas variáveis acima
-updateValueGame = spritesPerSecGame/fps
-updateValueMenu = spritesPerSecMenu/fps
+updateValueGame = spritesPerSecGame*2/fps
+updateValueMenu = spritesPerSecMenu*2/fps
 
 # Posição do chão em y e da otter em x
-ground_y = screenHeight-150
+ground_y = screenHeight-172
 otterPos_x = 150
+ground_width = 320
+ground_heigth = 32
 
 # Velocidade em que se move os objetos
 scroll = 1
@@ -166,11 +170,11 @@ class Obstacles(pygame.sprite.Sprite):
         self.image = pygame.transform.scale(self.image, (32*scale, 32*scale))
         self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect()
-        self.rect.center = (randrange(screenWidth,screenWidth + 320,80),screenHeight-(self.rect.height/2))
+        self.rect.center = (randrange(screenWidth,screenWidth + 320,80),screenHeight-(resolution))
     
     def update(self):
         if self.rect.topright[0] <= 0:
-            self.rect.center = (randrange(screenWidth,screenWidth + 320,80),screenHeight-(self.rect.height/2))
+            self.rect.center = (randrange(screenWidth,screenWidth + 320,80),screenHeight-(resolution))
             self.image = self.sprites[randrange(0,2)]
             self.image = pygame.transform.scale(self.image, (32*scale, 32*scale))
         self.rect.x -= scroll*4
@@ -178,8 +182,21 @@ class Obstacles(pygame.sprite.Sprite):
     def reposition(self):
         self.image = self.sprites[randrange(0,2)]
         self.image = pygame.transform.scale(self.image, (32*scale, 32*scale))
-        self.rect.center = (randrange(screenWidth,screenWidth + 320,80),screenHeight-(self.rect.height/2))
+        self.rect.center = (randrange(screenWidth,screenWidth + 320,80),screenHeight-(resolution))
 
+class Ground(pygame.sprite.Sprite):
+    def __init__(self, x):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = ground_img
+        self.image = pygame.transform.scale(self.image, (ground_width, ground_heigth))
+        self.rect = self.image.get_rect()
+        self.rect.y = screenHeight - ground_heigth
+        self.rect.x = x * ground_width
+    
+    def update(self):
+        if self.rect.topright[0] <= 0:
+            self.rect.x = screenWidth
+        self.rect.x -= scroll*4
 # -----------------------------------------------------------------------
 # Classes End
 
@@ -194,10 +211,15 @@ bg_width = bg_images[0].image.get_width()
 # Listas de todas as sprites que terão no game
 otterSprites = pygame.sprite.Group()
 obstaclesSprites = pygame.sprite.Group()
+allOtherSprites = pygame.sprite.Group()
 otter = Otter()
 obstacles = Obstacles()
 otterSprites.add(otter)
 obstaclesSprites.add(obstacles)
+
+for i in range(screenWidth*3//ground_width):
+    ground = Ground(i)
+    allOtherSprites.add(ground)
 
 # Função para exibir backgrounds
 def draw_bg():
@@ -304,6 +326,7 @@ def game():
         pygame.time.delay(2)
         otterSprites.draw(screen)
         obstaclesSprites.draw(screen)
+        allOtherSprites.draw(screen)
 
         colisoes = pygame.sprite.spritecollide(otter, obstaclesSprites, False, pygame.sprite.collide_mask)
 
@@ -316,6 +339,7 @@ def game():
             score += 1/2
             otterSprites.update()
             obstaclesSprites.update()
+            allOtherSprites.update()
         
         if score % increaseSpeedByScore == 0:
             global scroll
