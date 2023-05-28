@@ -39,6 +39,7 @@ sprite_sheet = pygame.image.load(os.path.join(img_path, 'otter_moving.png')).con
 sprite_sheet_iddle = pygame.image.load(os.path.join(img_path, 'otter_laugh.png')).convert_alpha()
 sprite_sheet_obstacles = pygame.image.load(os.path.join(img_path, 'tronco_obstaculo.png')).convert_alpha()
 ground_img = pygame.image.load(os.path.join(img_path, 'ground_tile.png')).convert_alpha()
+bg_menu = pygame.image.load(os.path.join(img_path, 'bg_menu.png')).convert_alpha()
 
 # Variáveis necessárias
 resolution = 64 # Sprites com resolução de 64 x 64
@@ -107,8 +108,8 @@ class Otter(pygame.sprite.Sprite):
     def set_menu(self):
         self.jumping = False
         self.running = False
-        self.rect.center = (screenWidth-500,20)
-        self.image = pygame.transform.scale(self.image, (resolution*8, resolution*8))
+        self.rect.center = (screenWidth-400,screenHeight-270)
+        self.image = pygame.transform.scale(self.image, (resolution*5, resolution*5))
 
     def set_game(self):
         self.jumping = False
@@ -256,7 +257,7 @@ def main_menu():
     while True:
         screen.fill(WHITE)
         draw_text('Otter Ruunnn', font, BLACK, screen, 20, 20)
- 
+        screen.blit(bg_menu, (0,0))
         mx, my = pygame.mouse.get_pos()
         
         global click
