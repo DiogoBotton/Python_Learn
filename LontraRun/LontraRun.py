@@ -166,22 +166,18 @@ class Obstacles(pygame.sprite.Sprite):
         for i in range (0,3):
             img = sprite_sheet_obstacles.subsurface((32*i,0), (32,32))
             self.sprites.append(img)   
-        self.image = self.sprites[randrange(0,2)]
-        self.image = pygame.transform.scale(self.image, (32*scale, 32*scale))
+        self.reposition()
         self.mask = pygame.mask.from_surface(self.image)
-        self.rect = self.image.get_rect()
-        self.rect.center = (randrange(screenWidth,screenWidth + 320,80),screenHeight-(resolution))
     
     def update(self):
         if self.rect.topright[0] <= 0:
-            self.rect.center = (randrange(screenWidth,screenWidth + 320,80),screenHeight-(resolution))
-            self.image = self.sprites[randrange(0,2)]
-            self.image = pygame.transform.scale(self.image, (32*scale, 32*scale))
+            self.reposition()
         self.rect.x -= scroll*4
     
     def reposition(self):
         self.image = self.sprites[randrange(0,2)]
         self.image = pygame.transform.scale(self.image, (32*scale, 32*scale))
+        self.rect = self.image.get_rect()
         self.rect.center = (randrange(screenWidth,screenWidth + 320,80),screenHeight-(resolution))
 
 class Ground(pygame.sprite.Sprite):
@@ -273,7 +269,7 @@ def main_menu():
                 game()
         if button_2.collidepoint((mx, my)):
             if click:
-                options()
+                exit()
         pygame.draw.rect(screen, (255, 0, 0), button_1)
         pygame.draw.rect(screen, (255, 0, 0), button_2)
  
@@ -348,21 +344,8 @@ def game():
         pygame.display.flip()
         mainClock.tick(fps)
  
-def options():
-    running = True
-    while running:
-        screen.fill(BLACK)
- 
-        draw_text('options', font, WHITE, screen, 20, 20)
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                pygame.quit()
-                sys.exit()
-            if event.type == KEYDOWN:
-                if event.key == K_ESCAPE:
-                    running = False
-        
-        pygame.display.flip()
-        mainClock.tick(fps)
+def exit():
+    pygame.quit()
+    sys.exit()
  
 main_menu()
