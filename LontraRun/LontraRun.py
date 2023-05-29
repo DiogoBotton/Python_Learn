@@ -37,7 +37,7 @@ fps = 60
 # Sprites and Grounds
 sprite_sheet = pygame.image.load(os.path.join(img_path, 'otter_moving.png')).convert_alpha() # convert_aplha mantem a transparência da imagem
 sprite_sheet_iddle = pygame.image.load(os.path.join(img_path, 'otter_laugh.png')).convert_alpha()
-sprite_sheet_obstacles = pygame.image.load(os.path.join(img_path, 'tronco_obstaculo.png')).convert_alpha()
+sprite_sheet_obstacles = pygame.image.load(os.path.join(img_path, 'obstacles.png')).convert_alpha()
 ground_img = pygame.image.load(os.path.join(img_path, 'ground_tile.png')).convert_alpha()
 bg_menu = pygame.image.load(os.path.join(img_path, 'bg_menu.png')).convert_alpha()
 bg_menu = pygame.transform.scale(bg_menu, (screenWidth, screenHeight))
@@ -60,6 +60,7 @@ ground_heigth = 32
 
 # Velocidade em que se move os objetos
 scroll = 1
+valueObstacles = 320
 
 # Pontuação
 score = 0
@@ -165,8 +166,8 @@ class Obstacles(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
         self.sprites = []
-        for i in range (0,3):
-            img = sprite_sheet_obstacles.subsurface((32*i,0), (32,32))
+        for i in range (0,4):
+            img = sprite_sheet_obstacles.subsurface((resolution*i,0), (resolution,resolution))
             self.sprites.append(img)   
         self.reposition()
         self.mask = pygame.mask.from_surface(self.image)
@@ -177,10 +178,11 @@ class Obstacles(pygame.sprite.Sprite):
         self.rect.x -= scroll*4
     
     def reposition(self):
-        self.image = self.sprites[randrange(0,2)]
-        self.image = pygame.transform.scale(self.image, (32*scale, 32*scale))
+        distIncrease = increaseValue*4
+        self.image = self.sprites[randrange(0,4)]
+        self.image = pygame.transform.scale(self.image, (resolution*2, resolution*2))
         self.rect = self.image.get_rect()
-        self.rect.center = (randrange(screenWidth,screenWidth + 320,80),screenHeight-(resolution))
+        self.rect.center = (randrange(screenWidth + (valueObstacles * distIncrease), screenWidth + valueObstacles + (valueObstacles * distIncrease)*4,80),screenHeight-(resolution+12))
 
 class Ground(pygame.sprite.Sprite):
     def __init__(self, x):
@@ -215,7 +217,7 @@ obstacles = Obstacles()
 otterSprites.add(otter)
 obstaclesSprites.add(obstacles)
 
-for i in range(screenWidth*3//ground_width):
+for i in range(screenWidth*4//ground_width):
     ground = Ground(i)
     allOtherSprites.add(ground)
 
