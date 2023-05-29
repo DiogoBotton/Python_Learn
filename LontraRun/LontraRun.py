@@ -40,6 +40,7 @@ sprite_sheet_iddle = pygame.image.load(os.path.join(img_path, 'otter_laugh.png')
 sprite_sheet_obstacles = pygame.image.load(os.path.join(img_path, 'tronco_obstaculo.png')).convert_alpha()
 ground_img = pygame.image.load(os.path.join(img_path, 'ground_tile.png')).convert_alpha()
 bg_menu = pygame.image.load(os.path.join(img_path, 'bg_menu.png')).convert_alpha()
+bg_menu = pygame.transform.scale(bg_menu, (screenWidth, screenHeight))
 
 # Variáveis necessárias
 resolution = 64 # Sprites com resolução de 64 x 64
@@ -108,7 +109,7 @@ class Otter(pygame.sprite.Sprite):
     def set_menu(self):
         self.jumping = False
         self.running = False
-        self.rect.center = (screenWidth-400,screenHeight-270)
+        self.rect.center = (screenWidth-520,screenHeight-320)
         self.image = pygame.transform.scale(self.image, (resolution*5, resolution*5))
 
     def set_game(self):
@@ -261,8 +262,8 @@ def main_menu():
         mx, my = pygame.mouse.get_pos()
         
         global click
-        button_1 = pygame.Rect(50, 100, 200, 50)
-        button_2 = pygame.Rect(50, 200, 200, 50)
+        button_1 = pygame.Rect(50, 50, 200, 50)
+        button_2 = pygame.Rect(50, 140, 200, 50)
         if button_1.collidepoint((mx, my)):
             if click:
                 otter.set_game()
