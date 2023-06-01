@@ -41,6 +41,8 @@ sprite_sheet_obstacles = pygame.image.load(os.path.join(img_path, 'obstacles.png
 ground_img = pygame.image.load(os.path.join(img_path, 'ground_tile.png')).convert_alpha()
 bg_menu = pygame.image.load(os.path.join(img_path, 'bg_menu.png')).convert_alpha()
 bg_menu = pygame.transform.scale(bg_menu, (screenWidth, screenHeight))
+bt_play = pygame.image.load(os.path.join(img_path, 'bt_play.png')).convert_alpha()
+bt_exit = pygame.image.load(os.path.join(img_path, 'bt_exit.png')).convert_alpha()
 
 # Variáveis necessárias
 resolution = 64 # Sprites com resolução de 64 x 64
@@ -67,7 +69,7 @@ score = 0
 increaseSpeedByScore = 250 # A cada X pontos aumenta velocidade
 increaseValue = 0.1
 
-font = pygame.font.SysFont(None, 40)
+font = pygame.font.SysFont('comicsansms', 35)
 
 # Classes
 # -----------------------------------------------------------------------
@@ -264,8 +266,8 @@ def main_menu():
         mx, my = pygame.mouse.get_pos()
         
         global click
-        button_1 = pygame.Rect(50, 50, 200, 50)
-        button_2 = pygame.Rect(50, 140, 200, 50)
+        button_1 = screen.blit(bt_play, (50,50))
+        button_2 = screen.blit(bt_exit, (50,140))
         if button_1.collidepoint((mx, my)):
             if click:
                 otter.set_game()
@@ -274,8 +276,6 @@ def main_menu():
         if button_2.collidepoint((mx, my)):
             if click:
                 exit()
-        pygame.draw.rect(screen, (255, 0, 0), button_1)
-        pygame.draw.rect(screen, (255, 0, 0), button_2)
  
         click = False
         for event in pygame.event.get():
@@ -334,6 +334,8 @@ def game():
             otter.collided = True
             stop_game()
         elif otter.collided:
+            draw_text('Game Over', font, WHITE, screen, screenWidth/3, screenHeight/2)
+            draw_text('Aperte ESC para voltar ao menu', font, WHITE, screen, screenWidth/3, (screenHeight/2)+60)
             pass
         else:
             score += 1/2
