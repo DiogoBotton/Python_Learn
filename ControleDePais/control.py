@@ -4,58 +4,89 @@ import firebase_admin
 from firebase_admin import credentials, db
 import datetime
 import os
+import logging
+import sys
 
-main_path = os.path.dirname(__file__)
-credentials_path = os.path.join(main_path, 'controle-de-pais-firebase.json')
+# Configurar logging
+logging.basicConfig(filename="control.log", level=logging.DEBUG, 
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-# Configurar o Firebase Realtime Database
-cred = credentials.Certificate(credentials_path)
-firebase_admin.initialize_app(cred, {
-    'databaseURL': 'https://controle-de-pais-default-rtdb.firebaseio.com/'
-})
+# Instalar antes: pip install firebase-admin pyautogui
+
+try:
+    # Obtém o caminho absoluto para o arquivo, considerando o diretório do executável.
+    if getattr(sys, 'frozen', False):
+        # Rodando como executável
+        main_path = os.path.dirname(sys.executable)
+    else:
+        # Rodando no modo debug
+        main_path = os.path.abspath(".")
+        
+    credentials_path = os.path.join(main_path, 'controle-de-pais-firebase.json')
+
+    # Configurar o Firebase Realtime Database
+    cred = credentials.Certificate(credentials_path)
+    firebase_admin.initialize_app(cred, {
+        'databaseURL': 'https://controle-de-pais-default-rtdb.firebaseio.com/'
+    })
+    logging.info("Firebase inicializado com sucesso.")
+except Exception as e:
+    logging.error(f"Erro ao inicializar o Firebase: {e}")
 
 # Lista de tuplas com opções de tempo e seus valores em segundos
 tempos_totais = [("Meia hora", 1800), ("Uma hora", 3600), ("Uma hora e meia", 5400), ("Duas horas", 7200)]
 
 # Função para carregar a lista de usuários do Firebase
 def carregar_usuarios():
-    ref = db.reference('usuarios')
-    usuarios = ref.get()
-    return list(usuarios.keys()) if usuarios else []
+    try:
+        ref = db.reference('usuarios')
+        usuarios = ref.get()
+        logging.info("Lista de usuários carregada com sucesso.")
+        return list(usuarios.keys()) if usuarios else []
+    except Exception as e:
+        logging.error(f"Erro ao carregar lista de usuários: {e}")
 
 # Função para carregar as configurações do usuário selecionado
 def carregar_configuracoes_usuario(*args):
-    usuario = lista_usuarios.get()
-    ref = db.reference(f'usuarios/{usuario}')
-    data = ref.get()
-    if data:
-        var_uso_permitido.set(data.get('uso_permitido', False))
-        tempo_total_em_segundos = data.get('tempo_total', 0)
-        for texto, valor in tempos_totais:
-            if tempo_total_em_segundos == valor:
-                var_tempo_total.set(texto)
-                break
-
+    try:
+        usuario = lista_usuarios.get()
+        ref = db.reference(f'usuarios/{usuario}')
+        data = ref.get()
+        if data:
+            var_uso_permitido.set(data.get('uso_permitido', False))
+            tempo_total_em_segundos = data.get('tempo_total', 0)
+            for texto, valor in tempos_totais:
+                if tempo_total_em_segundos == valor:
+                    var_tempo_total.set(texto)
+                    break
+        logging.info(f"Configurações carregadas para o usuário {usuario}.")
+    except Exception as e:
+        logging.error(f"Erro ao carregar configurações do usuário {usuario}: {e}")
+        
 # Função para salvar configurações no Firebase
 def salvar_configuracoes():
-    usuario = lista_usuarios.get()
-    uso_permitido = var_uso_permitido.get()
-    tempo_total_str = var_tempo_total.get()
+    try:
+        usuario = lista_usuarios.get()
+        uso_permitido = var_uso_permitido.get()
+        tempo_total_str = var_tempo_total.get()
 
-    if not usuario or not tempo_total_str:
-        messagebox.showerror("Erro", "Por favor, selecione um usuário válido e um tempo total.")
-        return
+        if not usuario or not tempo_total_str:
+            messagebox.showerror("Erro", "Por favor, selecione um usuário válido e um tempo total.")
+            return
 
-    tempo_total_em_segundos = next((valor for texto, valor in tempos_totais if texto == tempo_total_str), None)
+        tempo_total_em_segundos = next((valor for texto, valor in tempos_totais if texto == tempo_total_str), None)
 
-    ref = db.reference(f'usuarios/{usuario}')
-    ref.update({
-        'uso_permitido': uso_permitido,
-        'tempo_total': tempo_total_em_segundos,
-        'tempo_restante': tempo_total_em_segundos if uso_permitido else 0,
-        'ultimo_login': datetime.datetime.now().isoformat()
-    })
-    messagebox.showinfo("Sucesso", "Configurações salvas com sucesso!")
+        ref = db.reference(f'usuarios/{usuario}')
+        ref.update({
+            'uso_permitido': uso_permitido,
+            'tempo_total': tempo_total_em_segundos,
+            'tempo_restante': tempo_total_em_segundos if uso_permitido else 0,
+            'ultimo_login': datetime.datetime.now().isoformat()
+        })
+        messagebox.showinfo("Sucesso", "Configurações salvas com sucesso!")
+        logging.info(f"Configurações salvas para o usuário {usuario}.")
+    except Exception as e:
+        logging.error(f"Erro ao salvar configurações no Firebase: {e}")
 
 # Configurar a interface gráfica
 root = tk.Tk()
