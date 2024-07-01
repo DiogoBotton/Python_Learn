@@ -1,5 +1,4 @@
-import tkinter as tk
-from tkinter import messagebox
+import flet as ft
 import firebase_admin
 from firebase_admin import credentials, db
 import datetime
@@ -47,35 +46,21 @@ def carregar_usuarios():
         logging.error(f"Erro ao carregar lista de usuários: {e}")
 
 # Função para carregar as configurações do usuário selecionado
-def carregar_configuracoes_usuario(*args):
+def carregar_configuracoes_usuario(usuario):
     try:
-        usuario = lista_usuarios.get()
         ref = db.reference(f'usuarios/{usuario}')
         data = ref.get()
         if data:
-            var_uso_permitido.set(data.get('uso_permitido', False))
-            tempo_total_em_segundos = data.get('tempo_total', 0)
-            for texto, valor in tempos_totais:
-                if tempo_total_em_segundos == valor:
-                    var_tempo_total.set(texto)
-                    break
+            return data.get('uso_permitido', False), data.get('tempo_total', 0)
         logging.info(f"Configurações carregadas para o usuário {usuario}.")
+        return False, 0
     except Exception as e:
         logging.error(f"Erro ao carregar configurações do usuário {usuario}: {e}")
+        return False, 0
         
 # Função para salvar configurações no Firebase
-def salvar_configuracoes():
+def salvar_configuracoes(usuario, uso_permitido, tempo_total_em_segundos):
     try:
-        usuario = lista_usuarios.get()
-        uso_permitido = var_uso_permitido.get()
-        tempo_total_str = var_tempo_total.get()
-
-        if not usuario or not tempo_total_str:
-            messagebox.showerror("Erro", "Por favor, selecione um usuário válido e um tempo total.")
-            return
-
-        tempo_total_em_segundos = next((valor for texto, valor in tempos_totais if texto == tempo_total_str), None)
-
         ref = db.reference(f'usuarios/{usuario}')
         ref.update({
             'uso_permitido': uso_permitido,
@@ -83,39 +68,91 @@ def salvar_configuracoes():
             'tempo_restante': tempo_total_em_segundos if uso_permitido else 0,
             'ultimo_login': datetime.datetime.now().isoformat()
         })
-        messagebox.showinfo("Sucesso", "Configurações salvas com sucesso!")
         logging.info(f"Configurações salvas para o usuário {usuario}.")
     except Exception as e:
         logging.error(f"Erro ao salvar configurações no Firebase: {e}")
 
-# Configurar a interface gráfica
-root = tk.Tk()
-root.title("Configuração de Horários de Uso")
+# Configurar a interface gráfica com Flet
+def main(page: ft.Page):
+    page.title = "Configuração de Controle de Pais"
+    page.window_width = 400
+    page.window_height = 300
+    
+    usuarios = carregar_usuarios()
 
-# Label e OptionMenu para a lista de usuários
-tk.Label(root, text="Usuário:").grid(row=0, column=0, padx=10, pady=10)
-usuarios = carregar_usuarios()
-lista_usuarios = tk.StringVar(root)
-lista_usuarios.set(usuarios[0] if usuarios else "Nenhum usuário disponível")
-option_menu_usuarios = tk.OptionMenu(root, lista_usuarios, *usuarios) # TODO: Aqui ainda ocorre erro em caso da lista de usuários ser vazia
-option_menu_usuarios.grid(row=0, column=1, padx=10, pady=10)
-lista_usuarios.trace('w', carregar_configuracoes_usuario)
+    def on_usuario_change(e):
+        usuario = lista_usuarios.value
+        if usuario:
+            uso_permitido, tempo_total_em_segundos = carregar_configuracoes_usuario(usuario)
+            var_uso_permitido.value = uso_permitido
+            var_tempo_total.value = next((texto for texto, valor in tempos_totais if valor == tempo_total_em_segundos), "")
+            page.update()
 
-# Checkbox para uso permitido
-var_uso_permitido = tk.BooleanVar()
-checkbox_uso_permitido = tk.Checkbutton(root, text="Uso Permitido", variable=var_uso_permitido)
-checkbox_uso_permitido.grid(row=1, column=0, columnspan=2, padx=10, pady=10)
+    def on_salvar_click(e):
+        usuario = lista_usuarios.value
+        uso_permitido = var_uso_permitido.value
+        tempo_total_str = var_tempo_total.value
 
-# Label e OptionMenu para o tempo total permitido
-tk.Label(root, text="Tempo Total:").grid(row=2, column=0, padx=10, pady=10)
-var_tempo_total = tk.StringVar(root)
-var_tempo_total.set(tempos_totais[0][0])
-option_menu_tempo_total = tk.OptionMenu(root, var_tempo_total, *[texto for texto, valor in tempos_totais])
-option_menu_tempo_total.grid(row=2, column=1, padx=10, pady=10)
+        if not usuario or not tempo_total_str:
+            page.open(dlg_modal_error)
+            page.update()
+            return
 
-# Botão para salvar as configurações
-button_salvar = tk.Button(root, text="Salvar Configurações", command=salvar_configuracoes)
-button_salvar.grid(row=3, column=0, columnspan=2, padx=10, pady=10)
+        tempo_total_em_segundos = next((valor for texto, valor in tempos_totais if texto == tempo_total_str), None)
+        salvar_configuracoes(usuario, uso_permitido, tempo_total_em_segundos)
+        
+        page.open(dlg_modal_success)
+        page.update()
+    
+    def handle_close_error(e):
+            page.close(dlg_modal_error)
+    
+    def handle_close_success(e):
+            page.close(dlg_modal_success)
+    
+    dlg_modal_error = ft.AlertDialog(
+        modal=True,
+        title=ft.Text("Erro"),
+        content=ft.Text("Por favor, selecione um usuário válido e um tempo total."),
+        actions=[
+            ft.TextButton("Ok", on_click=handle_close_error)
+        ],
+        actions_alignment=ft.MainAxisAlignment.END
+    )
+    
+    dlg_modal_success = ft.AlertDialog(
+        modal=True,
+        title=ft.Text("Sucesso"),
+        content=ft.Text("Configurações salvas com sucesso!"),
+        actions=[
+            ft.TextButton("Ok", on_click=handle_close_success)
+        ],
+        actions_alignment=ft.MainAxisAlignment.END
+    )
 
-# Iniciar a interface gráfica
-root.mainloop()
+    lista_usuarios = ft.Dropdown(
+        options=[ft.dropdown.Option(usuario) for usuario in usuarios],
+        on_change=on_usuario_change
+    )
+
+    var_uso_permitido = ft.Checkbox(label="Uso Permitido")
+    var_tempo_total = ft.Dropdown(
+        options=[ft.dropdown.Option(texto) for texto, _ in tempos_totais]
+    )
+
+    botao_salvar = ft.ElevatedButton(text="Salvar Configurações", on_click=on_salvar_click)
+
+    page.add(
+        ft.Column(
+            controls=[
+                ft.Text("Selecione o Usuário:"),
+                lista_usuarios,
+                var_uso_permitido,
+                ft.Text("Tempo Total de Uso:"),
+                var_tempo_total,
+                botao_salvar
+            ]
+        )
+    )
+
+ft.app(target=main)
