@@ -75,8 +75,9 @@ def salvar_configuracoes(usuario, uso_permitido, tempo_total_em_segundos):
 # Configurar a interface gráfica com Flet
 def main(page: ft.Page):
     page.title = "Configuração de Controle de Pais"
-    page.window_width = 400
-    page.window_height = 300
+    page.window.width = 400
+    page.window.height = 600
+    page.theme_mode = ft.ThemeMode.SYSTEM
     
     usuarios = carregar_usuarios()
 
@@ -94,33 +95,25 @@ def main(page: ft.Page):
         tempo_total_str = var_tempo_total.value
 
         if not usuario or not tempo_total_str:
-            page.open(dlg_modal_error)
+            dlg_modal.title = ft.Text("Erro")
+            dlg_modal.content = ft.Text("Por favor, selecione um usuário válido e um tempo total.")
+            
+            page.open(dlg_modal)
             page.update()
             return
 
         tempo_total_em_segundos = next((valor for texto, valor in tempos_totais if texto == tempo_total_str), None)
         salvar_configuracoes(usuario, uso_permitido, tempo_total_em_segundos)
         
-        page.open(dlg_modal_success)
+        dlg_modal.title = ft.Text("Sucesso")
+        dlg_modal.content = ft.Text("Configurações salvas com sucesso!")
+        page.open(dlg_modal)
         page.update()
     
-    def handle_close_error(e):
-            page.close(dlg_modal_error)
-    
     def handle_close_success(e):
-            page.close(dlg_modal_success)
+            page.close(dlg_modal)
     
-    dlg_modal_error = ft.AlertDialog(
-        modal=True,
-        title=ft.Text("Erro"),
-        content=ft.Text("Por favor, selecione um usuário válido e um tempo total."),
-        actions=[
-            ft.TextButton("Ok", on_click=handle_close_error)
-        ],
-        actions_alignment=ft.MainAxisAlignment.END
-    )
-    
-    dlg_modal_success = ft.AlertDialog(
+    dlg_modal = ft.AlertDialog(
         modal=True,
         title=ft.Text("Sucesso"),
         content=ft.Text("Configurações salvas com sucesso!"),
@@ -143,15 +136,38 @@ def main(page: ft.Page):
     botao_salvar = ft.ElevatedButton(text="Salvar Configurações", on_click=on_salvar_click)
 
     page.add(
+        ft.Container(
+            alignment=ft.alignment.center,
+            margin=25,
+            content=ft.Text("Configuração de Controle de Pais", size=20)
+        ),
         ft.Column(
             controls=[
                 ft.Text("Selecione o Usuário:"),
-                lista_usuarios,
-                var_uso_permitido,
+                lista_usuarios
+            ],
+            spacing=20
+        ),
+        
+        ft.Row(height=15),
+        
+        ft.Column(
+            controls=[var_uso_permitido]
+        ),
+        
+        ft.Row(height=15),
+        
+        ft.Column(
+            controls=[
                 ft.Text("Tempo Total de Uso:"),
-                var_tempo_total,
-                botao_salvar
-            ]
+                var_tempo_total
+            ],
+            spacing=20
+        ),
+        ft.Container(
+            alignment=ft.alignment.center,
+            margin=50,
+            content=botao_salvar
         )
     )
 
