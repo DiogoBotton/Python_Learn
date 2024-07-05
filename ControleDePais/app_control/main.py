@@ -1,5 +1,6 @@
 import flet as ft
 from control import ControleDePais
+from reward import RecompensasUsuario
 
 def Main(page: ft.Page):
     page.title = "Configuração de Controle de Pais"
@@ -9,8 +10,8 @@ def Main(page: ft.Page):
         
     navigation_bar = ft.NavigationBar(
         destinations=[
-            ft.NavigationBarDestination(icon=ft.icons.CONTROL_POINT, label="Controle de Uso"),
-            ft.NavigationBarDestination(icon=ft.icons.BADGE_OUTLINED, label="Recompensas")
+            ft.NavigationBarDestination(icon=ft.icons.LOCK_OUTLINED, label="Controle de Uso"),
+            ft.NavigationBarDestination(icon=ft.icons.ACCESS_TIME_FILLED_OUTLINED, label="Recompensas")
         ]
     )
     
@@ -26,7 +27,7 @@ def Main(page: ft.Page):
             "/reward",
             [
                 navigation_bar,
-                ft.Text("Reward")
+                RecompensasUsuario()
             ]
         )
     }

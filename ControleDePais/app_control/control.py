@@ -1,76 +1,11 @@
 import flet as ft
-import firebase_admin
-from firebase_admin import credentials, db
-import datetime
-import os
-import logging
-import sys
+import services as sv
 
-# Configurar logging
-logging.basicConfig(filename="control.log", level=logging.DEBUG, 
-                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-# Inicializar o Firebase
-def inicializar_firebase():
-    try:
-        if getattr(sys, 'frozen', False):
-            main_path = os.path.dirname(sys.executable)
-        else:
-            main_path = os.path.abspath(".")
-            
-        credentials_path = os.path.join(main_path, 'controle-de-pais-firebase.json')
-
-        cred = credentials.Certificate(credentials_path)
-        firebase_admin.initialize_app(cred, {
-            'databaseURL': 'https://controle-de-pais-default-rtdb.firebaseio.com/'
-        })
-        logging.info("Firebase inicializado com sucesso.")
-    except Exception as e:
-        logging.error(f"Erro ao inicializar o Firebase: {e}")
-
-inicializar_firebase()
-
-# Funções auxiliares
-def carregar_usuarios():
-    try:
-        ref = db.reference('usuarios')
-        usuarios = ref.get()
-        logging.info("Lista de usuários carregada com sucesso.")
-        return list(usuarios.keys()) if usuarios else []
-    except Exception as e:
-        logging.error(f"Erro ao carregar lista de usuários: {e}")
-
-def carregar_configuracoes_usuario(usuario):
-    try:
-        ref = db.reference(f'usuarios/{usuario}')
-        data = ref.get()
-        if data:
-            return data.get('uso_permitido', False), data.get('tempo_total', 0)
-        logging.info(f"Configurações carregadas para o usuário {usuario}.")
-        return False, 0
-    except Exception as e:
-        logging.error(f"Erro ao carregar configurações do usuário {usuario}: {e}")
-        return False, 0
-
-def salvar_configuracoes(usuario, uso_permitido, tempo_total_em_segundos):
-    try:
-        ref = db.reference(f'usuarios/{usuario}')
-        ref.update({
-            'uso_permitido': uso_permitido,
-            'tempo_total': tempo_total_em_segundos,
-            'tempo_restante': tempo_total_em_segundos if uso_permitido else 0,
-            'ultimo_login': datetime.datetime.now().isoformat()
-        })
-        logging.info(f"Configurações salvas para o usuário {usuario}.")
-    except Exception as e:
-        logging.error(f"Erro ao salvar configurações no Firebase: {e}")
-
-# Definir o componente
 class ControleDePais(ft.UserControl):
     def __init__(self):
         super().__init__()
         self.tempos_totais = [("Meia hora", 1800), ("Uma hora", 3600), ("Uma hora e meia", 5400), ("Duas horas", 7200)]
-        self.usuarios = carregar_usuarios()
+        self.usuarios = sv.carregar_usuarios()
 
     def build(self):
         self.lista_usuarios = ft.Dropdown(
@@ -90,7 +25,7 @@ class ControleDePais(ft.UserControl):
             title=ft.Text("Sucesso"),
             content=ft.Text("Configurações salvas com sucesso!"),
             actions=[
-                ft.TextButton("Ok", on_click=self.handle_close_success)
+                ft.TextButton("Ok", on_click=self.handle_close)
             ],
             actions_alignment=ft.MainAxisAlignment.END
         )
@@ -136,7 +71,7 @@ class ControleDePais(ft.UserControl):
     def on_usuario_change(self, e):
         usuario = self.lista_usuarios.value
         if usuario:
-            uso_permitido, tempo_total_em_segundos = carregar_configuracoes_usuario(usuario)
+            uso_permitido, tempo_total_em_segundos = sv.carregar_configuracoes_usuario(usuario)
             self.var_uso_permitido.value = uso_permitido
             self.var_tempo_total.value = next((texto for texto, valor in self.tempos_totais if valor == tempo_total_em_segundos), "")
             self.update()
@@ -154,12 +89,12 @@ class ControleDePais(ft.UserControl):
             return
 
         tempo_total_em_segundos = next((valor for texto, valor in self.tempos_totais if texto == tempo_total_str), None)
-        salvar_configuracoes(usuario, uso_permitido, tempo_total_em_segundos)
+        sv.salvar_configuracoes(usuario, uso_permitido, tempo_total_em_segundos)
         
         self.dlg_modal.title = ft.Text("Sucesso")
         self.dlg_modal.content = ft.Text("Configurações salvas com sucesso!")
         self.page.open(self.dlg_modal)
         self.update()
 
-    def handle_close_success(self, e):
+    def handle_close(self, e):
         self.page.close(self.dlg_modal)
