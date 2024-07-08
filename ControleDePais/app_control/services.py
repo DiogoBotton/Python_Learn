@@ -109,11 +109,15 @@ def carregar_configuracoes_usuario(usuario):
 def salvar_configuracoes(usuario, uso_permitido, tempo_total_em_segundos):
     try:
         ref = db.reference(f'usuarios/{usuario}')
+        data = ref.get()
+        uso_permitido_db = data.get('uso_permitido', False)
+        firstAccess = data.get('isFirstAccess', False)
+        
         ref.update({
             'uso_permitido': uso_permitido,
             'tempo_total': tempo_total_em_segundos,
             'tempo_restante': tempo_total_em_segundos if uso_permitido else 0,
-            'isFirstAccess': True if uso_permitido else False,
+            'isFirstAccess': True if uso_permitido and (not uso_permitido_db) else firstAccess,
             'ultimo_login': datetime.datetime.now().isoformat()
         })
         logging.info(f"Configurações salvas para o usuário {usuario}.")
