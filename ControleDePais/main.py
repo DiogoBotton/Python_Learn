@@ -63,22 +63,27 @@ def verificar_tempo(usuario):
             tempo_restante = data.get('tempo_restante', 0)
             tempo_total = data.get('tempo_total', TEMPO_TOTAL_USUARIO)
 
-            if uso_permitido and tempo_restante > 0:
-                return True, tempo_restante, tempo_total
-            else:
-                return False, 0, TEMPO_TOTAL_USUARIO
-        return False, 0
+            return uso_permitido, tempo_restante, tempo_total
+        return False, 0, TEMPO_TOTAL_USUARIO
     except Exception as e:
         logging.error(f"Erro ao acessar o Firebase e verificar o tempo de uso, acesso bloqueado: {e}")
-        return False, 0
+        return False, 0, TEMPO_TOTAL_USUARIO
 
 # Atualizar tempo restante no Firebase
 def atualizar_tempo_restante(usuario, tempo_restante, uso_permitido = False):
     try:
         ref = db.reference(f'usuarios/{usuario}')
+        data = ref.get()
+        tempo_total = data.get('tempo_total', TEMPO_TOTAL_USUARIO)
+        firstAccess = data.get('isFirstAccess', False)
+        if firstAccess:
+            debitar_recompensa(usuario, tempo_total)
+            firstAccess = False
+
         ref.update({
             'uso_permitido': uso_permitido,
             'tempo_restante': tempo_restante,
+            'isFirstAccess': firstAccess,
             'ultimo_login': datetime.datetime.now().isoformat()
         })
     except Exception as e:
@@ -93,16 +98,31 @@ def registrar_usuario(usuario, tempo_total):
                 'uso_permitido': False,
                 'tempo_total': tempo_total,
                 'tempo_restante': 0,
+                'isFirstAccess': True,
                 'ultimo_login': datetime.datetime.now().isoformat()
             })
     except Exception as e:
         logging.error(f"Erro ao registrar o usuário no Firebase: {e}")
 
+def debitar_recompensa(usuario, tempo_total_em_segundos):
+    try:
+        ref = db.reference(f'usuarios/{usuario}/recompensas')
+        novo_debito = {
+            'descricao': "Débito",
+            'tempo_total': tempo_total_em_segundos,
+            'isIncrease': False,
+            'data': datetime.datetime.now().isoformat()
+        }
+        ref.push(novo_debito)
+        logging.info(f"Débito de recompensa salva para o usuário {usuario}.")
+    except Exception as e:
+        logging.error(f"Erro ao debitar recompensa do usuário no Firebase: {e}")
+
 # Função principal para verificar e bloquear se necessário
 def verificar_e_bloquear():
     TEMPO_DORMIR = 300  # 5 minutos
     usuario = getpass.getuser()
-    registrar_usuario(usuario, TEMPO_TOTAL_USUARIO)  # Define 1 hora de uso total para novos usuários
+    registrar_usuario(usuario, TEMPO_TOTAL_USUARIO)  # Define meia hora de uso total para novos usuários
     
     if not verificar_conexao():
         bloquear_pc()
@@ -112,7 +132,9 @@ def verificar_e_bloquear():
     
     if permitido and tempo_restante <= 0:
         atualizar_tempo_restante(usuario, tempo_total, True)
-    
+    elif permitido and tempo_restante > 0:
+        atualizar_tempo_restante(usuario, tempo_restante, True)
+
     if permitido:
         print(f"Tempo de uso permitido por {tempo_restante // 60} minutos.")
         while tempo_restante > 0:

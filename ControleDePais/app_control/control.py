@@ -13,7 +13,7 @@ class ControleDePais(ft.UserControl):
             on_change=self.on_usuario_change
         )
 
-        self.var_uso_permitido = ft.Checkbox(label="Uso Permitido")
+        self.var_uso_permitido = ft.Switch(label="Uso Permitido")
         self.var_tempo_total = ft.Dropdown(
             options=[ft.dropdown.Option(texto) for texto, _ in self.tempos_totais]
         )
@@ -89,6 +89,15 @@ class ControleDePais(ft.UserControl):
             return
 
         tempo_total_em_segundos = next((valor for texto, valor in self.tempos_totais if texto == tempo_total_str), None)
+
+        saldo = sv.calcular_saldo(usuario)
+        if saldo < tempo_total_em_segundos:
+            self.dlg_modal.title = ft.Text("Erro")
+            self.dlg_modal.content = ft.Text("Saldo do usuário selecionado insuficiente para liberar o PC.")
+            self.page.open(self.dlg_modal)
+            self.update()
+            return
+
         sv.salvar_configuracoes(usuario, uso_permitido, tempo_total_em_segundos)
         
         self.dlg_modal.title = ft.Text("Sucesso")

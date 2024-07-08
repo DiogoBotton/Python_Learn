@@ -6,7 +6,7 @@ import logging
 import sys
 
 # Configurar logging
-logging.basicConfig(filename="rewards.log", level=logging.DEBUG, 
+logging.basicConfig(filename="control.log", level=logging.DEBUG, 
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 # Inicializar o Firebase
@@ -38,6 +38,10 @@ def carregar_usuarios():
     except Exception as e:
         logging.error(f"Erro ao carregar lista de usuários: {e}")
 
+# -------------------------------------------------------------------------------------------
+# Reward
+# -------------------------------------------------------------------------------------------
+
 def carregar_recompensas_usuario(usuario):
     try:
         ref = db.reference(f'usuarios/{usuario}/recompensas')
@@ -48,12 +52,13 @@ def carregar_recompensas_usuario(usuario):
         logging.error(f"Erro ao carregar recompensas do usuário {usuario}: {e}")
         return []
 
-def salvar_recompensa(usuario, descricao, tempo_total_em_segundos):
+def salvar_recompensa(usuario, descricao, tempo_total_em_segundos, isIncrease):
     try:
         ref = db.reference(f'usuarios/{usuario}/recompensas')
         nova_recompensa = {
             'descricao': descricao,
             'tempo_total': tempo_total_em_segundos,
+            'isIncrease': isIncrease,
             'data': datetime.datetime.now().isoformat()
         }
         ref.push(nova_recompensa)
@@ -68,6 +73,26 @@ def deletar_recompensa(usuario, recompensa_id):
         logging.info(f"Recompensa {recompensa_id} deletada para o usuário {usuario}.")
     except Exception as e:
         logging.error(f"Erro ao deletar recompensa no Firebase: {e}")
+
+def calcular_saldo(usuario):
+    try:
+        recompensas = carregar_recompensas_usuario(usuario)
+        saldo = 0
+        for recompensa in recompensas.values():
+            if recompensa['isIncrease']:
+                saldo += recompensa['tempo_total']
+            else:
+                saldo -= recompensa['tempo_total']
+        logging.info(f"Saldo de horas calculado para o usuário {usuario}.")
+        return saldo
+    except Exception as e:
+        logging.error(f"Erro ao calcular saldo do usuário {usuario}: {e}")
+        return 0
+
+
+# -------------------------------------------------------------------------------------------
+# Control
+# -------------------------------------------------------------------------------------------
 
 def carregar_configuracoes_usuario(usuario):
     try:
@@ -88,6 +113,7 @@ def salvar_configuracoes(usuario, uso_permitido, tempo_total_em_segundos):
             'uso_permitido': uso_permitido,
             'tempo_total': tempo_total_em_segundos,
             'tempo_restante': tempo_total_em_segundos if uso_permitido else 0,
+            'isFirstAccess': True if uso_permitido else False,
             'ultimo_login': datetime.datetime.now().isoformat()
         })
         logging.info(f"Configurações salvas para o usuário {usuario}.")
