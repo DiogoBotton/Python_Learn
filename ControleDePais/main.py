@@ -39,8 +39,12 @@ except Exception as e:
 
 # Função para bloquear a tela
 def bloquear_pc():
-    #pyautogui.alert(text='Uso do computador não permitido ou tempo de uso esgotado!', title='Aviso', button='OK')
-    ctypes.windll.user32.ExitWindowsEx(0, 1)
+    try:
+        ctypes.windll.user32.ExitWindowsEx(0x00000004, 0x00000000)
+        logging.info("Forçou o logoff do usuário")
+    except Exception as e:
+        ctypes.windll.user32.ExitWindowsEx(0, 1)
+        logging.error(f"Erro ao forçar o logoff do usuário: {e}")
     
 # Verificar conexão com a Internet
 def verificar_conexao():
@@ -48,7 +52,7 @@ def verificar_conexao():
         socket.create_connection(("8.8.8.8", 53))
         logging.info("Há conexão com a internet.")
         return True
-    except OSError:
+    except OSError as e:
         logging.error(f"Não há conexão com a internet: {e}")
         return False
 
@@ -120,7 +124,7 @@ def debitar_recompensa(usuario, tempo_total_em_segundos):
 
 # Função principal para verificar e bloquear se necessário
 def verificar_e_bloquear():
-    TEMPO_DORMIR = 300  # 5 minutos
+    TEMPO_DORMIR = 120  # 2 minutos
     usuario = getpass.getuser()
     registrar_usuario(usuario, TEMPO_TOTAL_USUARIO)  # Define meia hora de uso total para novos usuários
     
@@ -143,7 +147,7 @@ def verificar_e_bloquear():
             else:
                 DORMIR_SEGUNDOS = tempo_restante
                 
-            time.sleep(DORMIR_SEGUNDOS)  # Dorme por 5 minutos ou o tempo restante
+            time.sleep(DORMIR_SEGUNDOS)  # Dorme por 2 minutos ou o tempo restante
             
             tempo_restante -= DORMIR_SEGUNDOS
             
