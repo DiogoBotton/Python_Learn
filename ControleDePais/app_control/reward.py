@@ -29,6 +29,8 @@ class RecompensasUsuario(ft.UserControl):
 
         self.botao_cadastrar = ft.ElevatedButton(text="Cadastrar Recompensa", on_click=self.on_abrir_modal_click)
 
+        self.saldo_usuario_component = ft.Text(f"Saldo de tempo: {0} minutos.")
+
         self.var_tempo_total = ft.Dropdown(
             options=[ft.dropdown.Option(texto) for texto, _ in self.tempos_totais]
         )
@@ -109,6 +111,10 @@ class RecompensasUsuario(ft.UserControl):
                         ]
                     )
                 ),
+                ft.Container(
+                    alignment=ft.alignment.center,
+                    content=self.saldo_usuario_component
+                ),
                 ft.Row(height=15),
                 ft.Container(
                     content=ft.ListView(
@@ -159,6 +165,8 @@ class RecompensasUsuario(ft.UserControl):
                         ft.DataCell(ft.IconButton(icon=ft.icons.DELETE, on_click=lambda e, r_id=recompensa_id: self.on_deletar_click(usuario, r_id)))
                     ]) for recompensa_id, recompensa in recompensas_pagina
                 ]
+            saldo_usuario = sv.calcular_saldo(usuario) // 60
+            self.saldo_usuario_component.value = f"Saldo de tempo: {saldo_usuario} minutos."
             self.update()
 
     def on_pagina_anterior(self, e):

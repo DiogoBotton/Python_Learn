@@ -4,7 +4,7 @@ import services as sv
 class ControleDePais(ft.UserControl):
     def __init__(self):
         super().__init__()
-        self.tempos_totais = [("Meia hora", 1800), ("Uma hora", 3600), ("Uma hora e meia", 5400), ("Duas horas", 7200)]
+        self.tempos_totais = [("3 minutos", 180), ("Meia hora", 1800), ("Uma hora", 3600), ("Uma hora e meia", 5400), ("Duas horas", 7200)]
         self.usuarios = sv.carregar_usuarios()
 
     def build(self):
