@@ -11,8 +11,20 @@ import sys
 
 TEMPO_TOTAL_USUARIO = 1800  # Meia hora
 
+# Obter o caminho da pasta "Meus Documentos" do usuário atual
+documentos_path = os.path.join(os.environ["USERPROFILE"], "Documents")
+
+# Definir o caminho da nova pasta "logs"
+logs_path = os.path.join(documentos_path, "logs")
+
+# Criar a pasta "logs" se ela não existir
+os.makedirs(logs_path, exist_ok=True)
+
+# Definir o caminho completo para o arquivo de log dentro da pasta "logs"
+log_filename = os.path.join(logs_path, "control.log")
+
 # Configurar logging
-logging.basicConfig(filename="control.log", level=logging.DEBUG, 
+logging.basicConfig(filename=log_filename, level=logging.DEBUG, 
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 # Instalar antes: pip install firebase-admin pyautogui
